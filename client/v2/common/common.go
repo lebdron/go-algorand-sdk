@@ -30,10 +30,11 @@ type Header struct {
 
 // Client manages the REST interface for a calling user.
 type Client struct {
-	serverURL url.URL
-	apiHeader string
-	apiToken  string
-	headers   []*Header
+	httpClient *http.Client
+	serverURL  url.URL
+	apiHeader  string
+	apiToken   string
+	headers    []*Header
 }
 
 // MakeClient is the factory for constructing a Client for a given endpoint.
@@ -44,9 +45,10 @@ func MakeClient(address string, apiHeader, apiToken string) (c *Client, err erro
 	}
 
 	c = &Client{
-		serverURL: *url,
-		apiHeader: apiHeader,
-		apiToken:  apiToken,
+		httpClient: &http.Client{},
+		serverURL:  *url,
+		apiHeader:  apiHeader,
+		apiToken:   apiToken,
 	}
 	return
 }
@@ -146,9 +148,8 @@ func (client *Client) submitFormRaw(ctx context.Context, path string, body inter
 		req.Header.Add(header.Key, header.Value)
 	}
 
-	httpClient := &http.Client{}
 	req = req.WithContext(ctx)
-	resp, err = httpClient.Do(req)
+	resp, err = client.httpClient.Do(req)
 
 	if err != nil {
 		select {
